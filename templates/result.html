@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>YOLO + ASCII 결과</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            padding: 20px;
+        }
+        .header {
+            margin-bottom: 30px;
+        }
+        .card-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            flex: 1 1 300px; /* 유연하게 크기 조절 */
+            min-width: 300px;
+        }
+        .card-img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+        }
+        .ascii {
+            background: #000;
+            color: #0f0;
+            font-family: monospace;
+            font-size: 10px;
+            line-height: 1.1;
+            overflow-x: auto;
+            padding: 5px;
+            white-space: pre; /* 중요: 공백과 줄바꿈 유지 */
+        }
+        button {
+            margin-top: 5px;
+            padding: 5px 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+    </style>
+    <script>
+        function copyAscii(btn) {
+            var pre = btn.previousElementSibling;
+            var asciiText = pre.innerText;
+            navigator.clipboard.writeText(asciiText);
+            alert("ASCII 복사 완료!");
+        }
+    </script>
+</head>
+<body>
+    <div class="header">
+        <h2>✨ 처리 결과</h2>
+        <p>원본 이미지{% if has_objects %} + Bounding Box{% endif %}:</p>
+        <img src="/results/{{ boxed_path }}" style="max-width:500px; border: 1px solid #ccc;"><br>
+        <hr>
+    </div>
+
+    <div class="card-container">
+        {% for block in blocks %}
+        <div class="card">
+            <h3>{{ block.title }}</h3>
+
+            {% if has_objects %}
+            <p>컬러 크롭:</p>
+            <img src="/results/{{ block.color_path }}" class="card-img"><br>
+            <p>그레이스케일 크롭 (마스크 전):</p>
+            <img src="/results/{{ block.gray_before_path }}" class="card-img"><br>
+            <p>마스크 적용된 영역:</p>
+            <img src="/results/{{ block.gray_path }}" class="card-img"><br>
+            {% endif %}
+
+            <p>ASCII 아트:</p>
+            <pre class="ascii">{{ block.ascii | safe }}</pre>
+            <button onclick="copyAscii(this)">ASCII 복사</button>
+        </div>
+        {% endfor %}
+    </div>
+
+    <br>
+    <a href="/">돌아가기</a>
+</body>
+</html>
