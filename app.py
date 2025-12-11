@@ -18,7 +18,6 @@ ASCII_CHARS = [" ", ".", ":", "-", "=", "+", "*", "#", "%", "@"]
 # ==========================================================
 
 def encode_image_to_base64(img):
-    """OpenCV 이미지를 PNG 포맷의 Base64 문자열로 인코딩."""
     _, buf = cv2.imencode(".png", img)
     return base64.b64encode(buf).decode("utf-8")
 
@@ -86,14 +85,19 @@ def process_object_block(img, result, index, box, cls_name, max_chars, scale_rat
     x1, y1 = max(0, x1), max(0, y1)
     x2, y2 = min(w - 1, x2), min(h - 1, y2)
 
+    # 1. 객체 영역 크롭
     cropped = img[y1:y2, x1:x2]
-    gray_crop = cv2.cvtColor(cropped, cv2.COLOR_BGR2GRAY)
 
+    # 2. 객체 마스크 추출
     mask_crop = extract_mask_crop(result, index, w, h, (x1, y1, x2, y2))
 
+    # 3. 컬러 이미지에 마스크 적용
     color_masked = cv2.bitwise_and(cropped, cropped, mask=mask_crop)
-    gray_masked = cv2.bitwise_and(gray_crop, gray_crop, mask=mask_crop)
 
+    # 4. 마스크 적용 후 그레이 변환
+    gray_masked = cv2.cvtColor(color_masked, cv2.COLOR_BGR2GRAY)
+
+    # 5. ASCII 변환
     ascii_art = image_to_ascii_auto(gray_masked, mask_crop, max_chars, scale_ratio)
 
     return {
