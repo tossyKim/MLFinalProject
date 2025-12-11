@@ -4,95 +4,436 @@
     <meta charset="UTF-8">
     <title>YOLO + ASCII 결과</title>
     <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Consolas', monospace;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
-            padding: 20px;
+            margin: 0;
+            padding: 20px 20px 30px;
+            background: radial-gradient(circle at top, #111827, #030712);
+            color: #e5e7eb;
+            text-align: center;
         }
-        .header {
-            margin-bottom: 30px;
-        }
-        .card-container {
+
+        /* 상단 버튼 컨테이너: 수평 중앙, 세로 중앙 정렬 */
+        .top-actions {
             display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
+            justify-content: center;
+            align-items: center; /* <-- 중요: 버튼들의 y 좌표를 동일하게 맞춤 */
+            gap: 15px;
+            margin-bottom: 20px;
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 0 10px;
         }
-        .card {
-            background: #fff;
-            border-radius: 8px;
-            padding: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            flex: 1 1 300px; /* 유연하게 크기 조절 */
-            min-width: 300px;
+
+        /* 공통 액션 버튼 스타일 (링크와 버튼 모두 동일하게 보이도록) */
+        a.action-btn,
+        button.action-btn {
+            display: inline-flex;           /* inline-flex로 크기 자동 + 내부 중앙 정렬 */
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;            /* 텍스트 길이에 따라 폭이 결정되도록 유지 */
+            text-decoration: none;
+            color: #fff;
+            font-weight: 700;
+            font-size: 16px;                /* 글자 크기 동일 */
+            padding: 10px 16px;             /* 동일한 padding -> 동일한 높이 */
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+            line-height: 1;                 /* 높이 계산 안정화 */
+            width: auto !important;         /* 절대적으로 auto로 유지 (전역 규칙 덮어쓰기) */
+            min-width: 0;                   /* flex 상황에서 최소 너비 강제 해제 */
+            box-sizing: border-box;
         }
-        .card-img {
-            max-width: 100%;
-            height: auto;
-            border: 1px solid #ccc;
+
+        a.action-btn:active,
+        button.action-btn:active {
+            transform: translateY(1px);
+        }
+
+        /* 상단 전용 : 뒤로가기 버튼 */
+        .back-link {
+            background-color: #2563eb; /* 파란색 계열 */
+            padding-left: 14px;
+            padding-right: 14px;
+        }
+        .back-link:hover {
+            background-color: #1d4ed8;
+            box-shadow: 0 6px 8px rgba(37,99,235,0.35);
+        }
+
+        /* 상단 전용 : 전체 그레이 변환 버튼 */
+        #fullGrayBtn {
+            background-color: #16a34a; /* 초록 계열 */
+        }
+        #fullGrayBtn:hover {
+            background-color: #15803d;
+            box-shadow: 0 6px 8px rgba(16,163,82,0.25);
+        }
+
+        /* YOLO 복구 버튼 스타일 (동적 추가될 때) */
+        .yolo-recovery-btn {
+            background-color: #10b981 !important;
+        }
+        .yolo-recovery-btn:hover {
+            background-color: #059669 !important;
+            box-shadow: 0 6px 8px rgba(16,185,129,0.25);
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .header h2 {
+            font-size: 28px;
             margin-bottom: 10px;
         }
+        .header p {
+            color: #9ca3af;
+            margin-bottom: 12px;
+        }
+        .header img {
+            border-radius: 12px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+            display: block;
+            margin: 0 auto;
+        }
+        hr {
+            border: none;
+            height: 1px;
+            background: linear-gradient(to right, transparent, #374151, transparent);
+            margin: 30px auto;
+            width: 80%;
+        }
+
+        /* 카드 컨테이너 */
+        .card-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 22px;
+            justify-items: center;
+            align-items: start;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: rgba(17, 24, 39, 0.9);
+            border-radius: 20px;
+            padding: 18px 16px;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.05);
+            max-width: 480px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .card h3 {
+            margin: 0 0 12px;
+            font-size: 19px;
+        }
+
+        .card-img {
+            max-width: 100%;
+            border-radius: 12px;
+            margin: 0 auto 12px auto;
+            border: 1px solid #1f2937;
+            background: #000;
+            display: block;
+        }
+
         .ascii {
             background: #000;
-            color: #0f0;
-            font-family: monospace;
+            color: #22c55e;
             font-size: 10px;
-            line-height: 1.1;
+            line-height: 1.2;
+            border-radius: 12px;
+            padding: 12px;
+            border: 1px solid #064e3b;
+            white-space: pre;
             overflow-x: auto;
-            padding: 5px;
-            white-space: pre; /* 중요: 공백과 줄바꿈 유지 */
-        }
-        button {
-            margin-top: 5px;
-            padding: 5px 10px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 4px;
+            box-shadow: inset 0 0 30px rgba(34,197,94,0.15);
+            text-align: left;
             cursor: pointer;
         }
-        button:hover {
-            background-color: #218838;
+
+        /* --- 중요한 변경: 카드 내부 버튼만 full width 적용 --- */
+        .card button {
+            margin-top: 10px;
+            width: 100%;
+            padding: 10px;
+            border-radius: 12px;
+            border: none;
+            background: linear-gradient(135deg, #22c55e, #4ade80);
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            color: #052e16;
+            transition: 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
         }
+        .card button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 12px 30px rgba(34,197,94,0.5);
+        }
+
+        .ascii-modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(4px);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .ascii-modal-content {
+            background: #000;
+            padding: 20px;
+            border-radius: 12px;
+            max-width: 90%;
+            max-height: 90%;
+            overflow: auto;
+            border: 1px solid #22c55e;
+            color: #22c55e;
+            white-space: pre;
+            font-size: 12px;
+            line-height: 1.2;
+            box-shadow: 0 0 40px rgba(0,255,0,0.3);
+        }
+
+        .ascii-modal-close {
+            position: absolute;
+            top: 20px;
+            right: 35px;
+            font-size: 30px;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        /* 반응형: 화면이 좁아지면 버튼 간격 유지, 버튼 크기 자동 유지 */
+        @media (max-width: 480px) {
+            .top-actions {
+                gap: 10px;
+                padding: 0 8px;
+            }
+            a.action-btn, button.action-btn {
+                font-size: 15px;
+                padding: 9px 12px;
+            }
+        }
+
     </style>
     <script>
+        const originalYoloData = {
+            boxed_base64: "{{ boxed_base64 }}",
+            blocks: [
+                {% for block in blocks %}
+                {
+                    title: "{{ block.title }}",
+                    color_base64: "{{ block.color_base64 }}",
+                    gray_base64: "{{ block.gray_base64 }}",
+                    ascii: `{{ block.ascii | replace('\n', '\\n') | replace('`', '\\`') }}`
+                },
+                {% endfor %}
+            ],
+            has_objects: {{ 'true' if has_objects else 'false' }}
+        };
+
         function copyAscii(btn) {
-            var pre = btn.previousElementSibling;
-            var asciiText = pre.innerText;
-            navigator.clipboard.writeText(asciiText);
-            alert("ASCII 복사 완료!");
+            const pre = btn.previousElementSibling;
+            const asciiText = pre.innerText;
+            navigator.clipboard.writeText(asciiText).then(() => {
+                alert("ASCII 복사 완료!");
+            }).catch(() => {
+                alert("클립보드 접근 실패");
+            });
         }
+
+        function openAsciiModal(asciiText) {
+            document.getElementById("asciiModalContent").textContent = asciiText;
+            document.getElementById("asciiModal").style.display = "flex";
+        }
+
+        function closeAsciiModal() {
+            document.getElementById("asciiModal").style.display = "none";
+        }
+
+        document.addEventListener("keydown", function(event) {
+            if (event.key === "Escape") {
+                closeAsciiModal();
+            }
+        });
+
+        // ------------------------------------------------------------------
+        function updateResultView(data, isYoloResult) {
+            const headerImg = document.getElementById('baseImage');
+            const headerP = document.querySelector('.header p');
+            const cardContainer = document.getElementById('cardContainer');
+            const fullGrayBtn = document.getElementById('fullGrayBtn');
+            const isFullGrayMode = !isYoloResult;
+
+            headerImg.src = `data:image/png;base64,${data.boxed_base64}`;
+            if (isYoloResult) {
+                headerP.textContent = `원본 이미지 ${data.has_objects ? '+ Bounding Box' : ''}:`;
+            } else {
+                headerP.textContent = "원본 이미지 (객체 검출 생략):";
+            }
+
+            cardContainer.innerHTML = '';
+            data.blocks.forEach(block => {
+                const safeAscii = block.ascii.replace(/`/g, '\\`');
+                let cardBodyHtml = '';
+
+                if (isYoloResult && data.has_objects) {
+                    cardBodyHtml = `
+                        <p>컬러 크롭:</p>
+                        <img src="data:image/png;base64,${block.color_base64}" class="card-img">
+                        <p>세그멘테이션 결과 (그레이):</p>
+                        <img src="data:image/png;base64,${block.gray_base64}" class="card-img">
+                    `;
+                } else {
+                    cardBodyHtml = `
+                        <p>전체 그레이스케일 이미지:</p>
+                        <img src="data:image/png;base64,${block.gray_base64}" class="card-img">
+                    `;
+                }
+
+                const cardHtml = `
+                    <div class="card">
+                        <h3>${block.title}</h3>
+                        ${cardBodyHtml}
+                        <p>ASCII 아트:</p>
+                        <pre class="ascii" onclick="openAsciiModal(\`${safeAscii}\`)">${block.ascii}</pre>
+                        <button onclick="copyAscii(this)">ASCII 복사</button>
+                    </div>
+                `;
+                cardContainer.insertAdjacentHTML('beforeend', cardHtml);
+            });
+
+            if (isFullGrayMode) {
+                fullGrayBtn.textContent = "YOLO 수행 후 아스키 변환";
+                fullGrayBtn.classList.add('yolo-recovery-btn');
+                fullGrayBtn.onclick = restoreYoloResult;
+            } else {
+                fullGrayBtn.textContent = "전체 이미지 아스키 변환";
+                fullGrayBtn.classList.remove('yolo-recovery-btn');
+                fullGrayBtn.onclick = processFullGray;
+            }
+
+            fullGrayBtn.disabled = false;
+        }
+
+        function restoreYoloResult() {
+            document.getElementById('fullGrayBtn').disabled = true;
+            document.getElementById('cardContainer').innerHTML = `
+                <div style="grid-column: 1 / -1; color: #a5f3fc;">
+                    <p>YOLO 객체 검출 결과 복구 중...</p>
+                </div>
+            `;
+            updateResultView(originalYoloData, true);
+        }
+
+        function processFullGray() {
+            document.getElementById('cardContainer').innerHTML = `
+                <div style="grid-column: 1 / -1; color: #a5f3fc;">
+                    <p>전체 이미지 그레이스케일 변환 중...</p>
+                </div>
+            `;
+
+            const originalImageBase64 = document.getElementById('hidden_original_base64').value;
+            const maxChars = document.getElementById('hidden_max_chars').value;
+            const scaleRatio = document.getElementById('hidden_scale_ratio').value;
+
+            document.getElementById('fullGrayBtn').disabled = true;
+
+            fetch('/process_full_gray', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    image_base64: originalImageBase64,
+                    max_chars: maxChars,
+                    scale_ratio: scaleRatio
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert("처리 오류: " + data.error);
+                    document.getElementById('fullGrayBtn').disabled = false;
+                    return;
+                }
+                updateResultView(data, false);
+            })
+            .catch(err => {
+                alert("통신 오류 발생");
+                document.getElementById('fullGrayBtn').disabled = false;
+            });
+        }
+        // ------------------------------------------------------------------
     </script>
 </head>
+
 <body>
-    <div class="header">
-        <h2>✨ 처리 결과</h2>
-        <p>원본 이미지{% if has_objects %} + Bounding Box{% endif %}:</p>
-        <img src="/results/{{ boxed_path }}" style="max-width:500px; border: 1px solid #ccc;"><br>
-        <hr>
-    </div>
 
-    <div class="card-container">
-        {% for block in blocks %}
-        <div class="card">
-            <h3>{{ block.title }}</h3>
+<div class="top-actions">
+    <a href="/" class="action-btn back-link">← 돌아가기</a>
+    <button id="fullGrayBtn" class="action-btn" onclick="processFullGray()">YOLO 수행 후 아스키 변환</button>
+</div>
 
-            {% if has_objects %}
+<input type="hidden" id="hidden_max_chars" value="{{ request.form.get('max_chars') or 2000 }}">
+<input type="hidden" id="hidden_scale_ratio" value="{{ request.form.get('scale_ratio') or 0.9 }}">
+<input type="hidden" id="hidden_original_base64" value="{{ original_base64 }}">
+
+<div class="header">
+    <h2>✨ 처리 결과</h2>
+    <p>원본 이미지{% if has_objects %} + Bounding Box{% endif %}:</p>
+    <img src="data:image/png;base64,{{ boxed_base64 }}" style="max-width:500px;" id="baseImage">
+    <hr>
+</div>
+
+<div class="card-container" id="cardContainer">
+    {% for block in blocks %}
+    <div class="card">
+        <h3>{{ block.title }}</h3>
+
+        {% if has_objects %}
             <p>컬러 크롭:</p>
-            <img src="/results/{{ block.color_path }}" class="card-img"><br>
-            <p>그레이스케일 크롭 (마스크 전):</p>
-            <img src="/results/{{ block.gray_before_path }}" class="card-img"><br>
-            <p>마스크 적용된 영역:</p>
-            <img src="/results/{{ block.gray_path }}" class="card-img"><br>
-            {% endif %}
+            <img src="data:image/png;base64,{{ block.color_base64 }}" class="card-img">
 
-            <p>ASCII 아트:</p>
-            <pre class="ascii">{{ block.ascii | safe }}</pre>
-            <button onclick="copyAscii(this)">ASCII 복사</button>
-        </div>
-        {% endfor %}
+            <p>세그멘테이션 결과 (그레이):</p>
+            <img src="data:image/png;base64,{{ block.gray_base64 }}" class="card-img">
+        {% else %}
+            <p>전체 그레이스케일 이미지:</p>
+            <img src="data:image/png;base64,{{ block.gray_base64 }}" class="card-img">
+        {% endif %}
+
+        <p>ASCII 아트:</p>
+        <pre class="ascii" onclick="openAsciiModal(`{{ block.ascii | replace('`', '\\`') }}`)">{{ block.ascii }}</pre>
+        <button onclick="copyAscii(this)">ASCII 복사</button>
     </div>
+    {% endfor %}
+</div>
 
-    <br>
-    <a href="/">돌아가기</a>
+<div id="asciiModal" class="ascii-modal">
+    <span class="ascii-modal-close" onclick="closeAsciiModal()">&times;</span>
+    <pre id="asciiModalContent" class="ascii-modal-content"></pre>
+</div>
+
 </body>
 </html>
